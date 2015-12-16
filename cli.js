@@ -10,26 +10,24 @@ var p = require('path')
 var _ = require('lodash')
 
 var debug = function () {
-  if (argv.v) console.log.apply(this, arguments)
+  if (argv.v) console.error.apply(this, arguments)
 }
 
 var PREAMBLE =
-  'var exoform, __module, __self, a = []\n' +
+  'var __meta\n' +
   'if (typeof arguments !== \'undefined\') {\n' +
-  '  a = arguments;\n' +
-  '  exoform = a[0]\n' +
-  '  __self = a[1]\n' +
-  '  __module = a[4]\n' +
+  '  __meta = arguments[0]\n' +
   '} else {\n' +
-  '  exoform = require(\'exoform\')\n' +
-  '  __module = function () {}\n ' +
-  '}\n' +
-  'var __refs = a[2] || []\n' +
-  'var exports = a[3]\n' +
+  '  __meta = {\n' +
+  '    exoform: require(\'exoform\'),\n' +
+  '    define: function () {},\n' +
+  '    refs: [] } }\n' +
+  'var exoform = __meta.exoform\n' +
+  'var exports = __meta.mod\n' +
   'var module = { exports: exports }\n'
 
 var POSTAMBLE =
-  '\n__module(module.exports)\n'
+  '\n__meta.define(module.exports)\n'
 
 var readPackageInfo = function (root) {
   return JSON.parse(fs.readFileSync(root + '/package.json'))
@@ -176,12 +174,13 @@ var transform = function (path, encountered, cb) {
           var src = fs.readFileSync(srcPath).toString()
           node.update('var ' + varName + ' = ' + src)
         } else if (toRequire === 'exoform') {
+          // already defined in preamble
           node.update('')
         } else {
           queue.push(srcPath)
-          var newString = 'exoform.require(__refs,\'' + srcPath + '\', ' +
+          debug('varName', varName)
+          var newString = '__meta.exoform.require(__meta.refs,\'' + srcPath + '\', ' +
             'function (' + varName + ') {\n'
-
           if (reqExp.suffix || prefix) {
             newString += (prefix ? prefix + '.' : '') +
               varName + ' = ' + varName + reqExp.suffix
@@ -225,7 +224,9 @@ var transform = function (path, encountered, cb) {
 
 transform(process.cwd() + '/' + argv._[0], function (err, res) {
   if (err) throw err
-  debug('writing cache...')
-  fs.writeFileSync(cacheFile, JSON.stringify(diskCache)+'\n')
+  if (argv.c) {
+    debug('writing cache...')
+    fs.writeFileSync(cacheFile, JSON.stringify(diskCache)+'\n')
+  }
   console.log(res)
 })
