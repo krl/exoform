@@ -11,9 +11,8 @@ var exoform = {
     })
   },
   require: function (refs, hash, cb) {
-    console.log('requiering', hash)
     if (hash.length < 32) {
-      var cycle = parseInt(hash)
+      var cycle = parseInt(hash, 10)
       cb(refs[refs.length - cycle - 1])
     } else {
       if (memo[hash]) return cb(memo[hash])
@@ -37,7 +36,7 @@ var exoform = {
               cb(module)
               return module
             }
-            new Function(data)(meta)
+            new Function(data)(meta) // eslint-disable-line
           })
           .on('error', function (err) { throw err })
       })

@@ -34,7 +34,12 @@ var readPackageInfo = function (root) {
 }
 
 var defaultReplace = function () {
-  return { fs: null }
+  return {
+    fs: null,
+    os: 'os-browserify',
+    http: 'http-browserify',
+    https: 'http-browserify'
+  }
 }
 
 var cacheFile = process.cwd() + '/.exoform-cache'
@@ -61,7 +66,7 @@ var transform = function (path, encountered, cb) {
   var cycle = _.findIndex(encountered, function (a) {
     return a === path
   })
-  if (cycle != -1) {
+  if (cycle !== -1) {
     return cb(null, cycle)
   }
 
@@ -89,7 +94,7 @@ var transform = function (path, encountered, cb) {
     var ref = node
     var found = false
     while (ref) {
-      if (ref.type == 'CallExpression') {
+      if (ref.type === 'CallExpression') {
         if (ref.callee.name === 'require') {
           found = ref.arguments[0].value
           ref = null
@@ -101,7 +106,7 @@ var transform = function (path, encountered, cb) {
         }
       } else if (ref.type === 'MemberExpression') {
         if (ref.property.type === 'Identifier') {
-          suffixes.unshift('.' + ref.property.name)
+          suffixes.unshift('.' + (ref.name || ref.property.name))
         } else {
           suffixes.unshift('[' + ref.property.raw + ']')
         }
@@ -115,15 +120,14 @@ var transform = function (path, encountered, cb) {
   }
 
   var output = falafel(transformed, function (node) {
+    var reqExp, varName
+    var prefix = ''
 
-    var reqExp, prefix = '', varName
-
-    if (node.type == 'AssignmentExpression') {
-      // x.test = require('test')
+    if (node.type === 'AssignmentExpression') {
       reqExp = findReq(node.right)
       if (reqExp) {
         var ref = node.left
-        var prop = ref.property.name
+        var prop = ref.name || ref.property.name
         var prefixes = []
         while (ref.object) {
           if (ref.object.name) {
@@ -138,7 +142,6 @@ var transform = function (path, encountered, cb) {
         varName = prop
       }
     } else if (node.type === 'VariableDeclaration') {
-      //console.log('hmm')
       reqExp = findReq(node.declarations[0].init)
       varName = node.declarations[0].id.name
     }
@@ -152,11 +155,14 @@ var transform = function (path, encountered, cb) {
       if (toRequire === null) {
         node.update('var ' + varName + ' = {}')
       } else {
-
         var resolved = resolve(toRequire, path)
-        // console.log(toRequire)
+
         if (!resolved) {
-          throw new Error('could not resolve '+ toRequire)
+          // resolve to exoform dependencies
+          resolved = resolve(toRequire, __filename)
+          if (!resolved) {
+            throw new Error('could not resolve ' + toRequire)
+          }
         }
 
         var srcPath = resolved.src
@@ -178,11 +184,10 @@ var transform = function (path, encountered, cb) {
           node.update('')
         } else {
           queue.push(srcPath)
-          debug('varName', varName)
-          var newString = '__meta.exoform.require(__meta.refs,\'' + srcPath + '\', ' +
-            'function (' + varName + ') {\n'
+          var newString = '__meta.exoform.require(__meta.refs, \'' + srcPath + '\', ' +
+            'function (' + varName + ') {'
           if (reqExp.suffix || prefix) {
-            newString += (prefix ? prefix + '.' : '') +
+            newString += '\n' + (prefix ? prefix + '.' : '') +
               varName + ' = ' + varName + reqExp.suffix
           }
 
@@ -226,7 +231,7 @@ transform(process.cwd() + '/' + argv._[0], function (err, res) {
   if (err) throw err
   if (argv.c) {
     debug('writing cache...')
-    fs.writeFileSync(cacheFile, JSON.stringify(diskCache)+'\n')
+    fs.writeFileSync(cacheFile, JSON.stringify(diskCache) + '\n')
   }
   console.log(res)
 })

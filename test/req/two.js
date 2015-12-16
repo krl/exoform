@@ -1,3 +1,3 @@
-//var three = require('./three.js')
+var three = require('./three.js')
 
-module.exports = { blorp: function () { return 'blubba ' + 'three' } }
+module.exports = { blorp: function () { return 'testblorp ' + three('extra')} }
