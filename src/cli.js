@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 var argv = require('minimist')(process.argv.slice(2))
-var transform = require('./bundle.js')
+var transform = require('exoform-bundle')
 var fs = require('fs')
 
 var debug = function () {
