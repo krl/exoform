@@ -30,9 +30,11 @@ var exoform = {
               mod: mod }
             meta.define = function (module) {
               memo[hash] = module
-              Object.defineProperty(module, '__meta', {
-                value: meta
-              })
+              if (!module.__meta) {
+                Object.defineProperty(module, '__meta', {
+                  value: meta
+                })
+              }
               cb(module)
               return module
             }
