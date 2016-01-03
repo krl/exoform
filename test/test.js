@@ -16,7 +16,7 @@ var compareOutput = function (file, cb) {
     },
     function (cb) {
       var cmd = 'node ' + clifile + ' ' + relfile +
-        ' | ipfs cat | node'
+        '| xargs cdump get | node'
       exec(cmd, function (err, stdout, stderr) {
         cb(err, stdout)
       })

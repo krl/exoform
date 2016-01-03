@@ -4,6 +4,8 @@ Exoform takes a module defined in CommonJS style, and recursively transforms it,
 
 This gives you the whole program, and its dependencies, in a content-addressable manner, that you could later require from other programs.
 
+Exoform uses [cdump](https://github.com/krl/cdump), for now, to store its blobs
+
 ## Example
 
 Input: test/req/one.js
@@ -23,7 +25,7 @@ console.log(c)
 ```
 
 ```bash
-exoform test/req/one.js | ipfs cat
+exoform test/req/one.js | xargs cdump get
 ```
 
 Output:
@@ -40,22 +42,22 @@ if (typeof arguments !== 'undefined') {
 var exoform = __meta.exoform
 var exports = __meta.mod
 var module = { exports: exports }
-'use strict';
-
-__meta.exoform.require(__meta.refs, 'QmTg6MAGCTxnqpT6v6A1u7fDip5piterr5cJydzWbhCgX7', function (a) {
-__meta.exoform.require(__meta.refs, 'QmTg6MAGCTxnqpT6v6A1u7fDip5piterr5cJydzWbhCgX7', function (b) {
+;
+__meta.exoform.require(__meta.refs, '6aa7e2e45e38d55c765ac44dbd98f5ce09f27c60696b823e70cf547816c38d31', function (a) {
+__meta.exoform.require(__meta.refs, '6aa7e2e45e38d55c765ac44dbd98f5ce09f27c60696b823e70cf547816c38d31', function (b) {
 b = b.blorp
-__meta.exoform.require(__meta.refs, 'QmTg6MAGCTxnqpT6v6A1u7fDip5piterr5cJydzWbhCgX7', function (c) {
+__meta.exoform.require(__meta.refs, '6aa7e2e45e38d55c765ac44dbd98f5ce09f27c60696b823e70cf547816c38d31', function (c) {
 c = c.blorp()
 
-var x = { y: { z: {} } };
-__meta.exoform.require(__meta.refs, 'QmTg6MAGCTxnqpT6v6A1u7fDip5piterr5cJydzWbhCgX7', function (two) {
-x.y.z.two = two;
+var x = { y: { z: {} } }
+__meta.exoform.require(__meta.refs, '6aa7e2e45e38d55c765ac44dbd98f5ce09f27c60696b823e70cf547816c38d31', function (two) {
+x.y.z.two = two
 
-console.log(x.y.z.two.blorp());
-console.log(a.blorp());
-console.log(b());
-console.log(c);
+console.log(x.y.z.two.blorp())
+console.log(a.blorp())
+console.log(b())
+console.log(c)
+;
 __meta.define(module.exports)
 })})})})
 ```
@@ -63,7 +65,7 @@ __meta.define(module.exports)
 The dependency loaded (test/req/two.js):
 
 ```bash
-ipfs cat QmTg6MAGCTxnqpT6v6A1u7fDip5piterr5cJydzWbhCgX7
+cdump get 6aa7e2e45e38d55c765ac44dbd98f5ce09f27c60696b823e70cf547816c38d31
 ```
 
 outputs:
@@ -80,13 +82,10 @@ if (typeof arguments !== 'undefined') {
 var exoform = __meta.exoform
 var exports = __meta.mod
 var module = { exports: exports }
-'use strict';
+;__meta.exoform.require(__meta.refs, '47171d069057c67c3f6e8cd2b409e3ea38920881f58407ed1b1ac00b27d8f8ab', function (three) {
 
-__meta.exoform.require(__meta.refs,'QmcJu1cijCd31EgkydhVthdepc8mtABHPjk4HuEtZLiWE7', function (three) {
-
-module.exports = { blorp: function blorp() {
-    return 'testblorp ' + three('extra');
-  } };
+module.exports = { blorp: function () { return 'testblorp ' + three('extra')} }
+;
 __meta.define(module.exports)
 })
 ```
